@@ -1,0 +1,13 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "websocket": "^1.0.33"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6"
+  }
+}

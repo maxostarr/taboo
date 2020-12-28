@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "name": "taboo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "workspaces": [
+    "server",
+    "client"
+  ]
+}
