@@ -23,14 +23,15 @@ const newGame = (ws: WebSocket) => {
     players: [],
     state: GameState.NEW,
   };
-  const jwtPayload = jwt.sign(
-    JSON.stringify({
-      gameID,
-      playerID: uuid(),
-      groupID: uuid(),
-    } as Player),
-    jwtSecret,
-  );
+
+  const newPlayer: Player = {
+    gameID,
+    playerID: uuid(),
+    groupID: uuid(),
+    websocket: ws,
+  };
+  games[gameID].players.push(newPlayer);
+  const jwtPayload = jwt.sign(JSON.stringify(newPlayer), jwtSecret);
 
   ws.send(
     JSON.stringify({
@@ -41,8 +42,8 @@ const newGame = (ws: WebSocket) => {
 };
 
 const joinGame = (ws: WebSocket, data: JoinOptions) => {
-  let gameID;
-  let groupID;
+  let gameID: string;
+  let groupID: string;
   if (!data.jwt) {
     if (!data.gameID || !Object.keys(games).includes(data.gameID)) {
       ws.send("must specify a valid game to join");
@@ -79,7 +80,43 @@ const joinGame = (ws: WebSocket, data: JoinOptions) => {
     playerID: uuid(),
     websocket: ws,
   };
+  console.log(games);
+
+  games[gameID].players.forEach((player) => {
+    console.log("sending to", player.playerID);
+
+    player.websocket.send(
+      JSON.stringify({
+        type: MessageType.ADD_PLAYER,
+        payload: jwt.sign(
+          JSON.stringify({
+            playerID: newPlayer.playerID,
+            gameID,
+            groupID,
+          } as Player),
+          jwtSecret,
+        ),
+      }),
+    );
+  });
+
   games[gameID].players.push(newPlayer);
+  ws.send(
+    JSON.stringify({
+      type: MessageType.PLAYERS_LIST,
+      payload: JSON.stringify(
+        games[gameID].players.map(
+          (p) =>
+            ({
+              gameID: p.gameID,
+              groupID: p.groupID,
+              playerID: p.playerID,
+            } as Player),
+        ),
+      ),
+    } as Message),
+  );
+
   ws.send(
     JSON.stringify({
       type: MessageType.JOIN,

@@ -4,12 +4,16 @@ import { gameStore } from "../util/gameStore";
 const Game = () => {
   // const { gameID, playerID, newGame } = useContext(GameContext);
   const [player, setPlayer] = useState(gameStore.playerInitialState);
+  const [game, setGame] = useState(gameStore.gameInitialState);
+
   const [gameIdToJoin, setGameIdToJoin] = useState("");
   useLayoutEffect(() => {
-    const subscription = gameStore.subscribe(setPlayer);
+    const playerSubscription = gameStore.subscribePlayer(setPlayer);
+    const gameSubscription = gameStore.subscribeGame(setGame);
     gameStore.init();
     return () => {
-      subscription.unsubscribe();
+      playerSubscription.unsubscribe();
+      gameSubscription.unsubscribe();
     };
   }, []);
 
@@ -32,6 +36,11 @@ const Game = () => {
           onChange={(e) => setGameIdToJoin(e.target.value)}
         />
         <button onClick={joinGame}>Join Game</button>
+      </div>
+      <div>
+        {game.players.map((player) => (
+          <p key={player.playerID}>{player.playerID}</p>
+        ))}
       </div>
     </div>
   );
