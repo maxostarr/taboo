@@ -1,6 +1,7 @@
 export enum MessageType {
   JOIN,
   NEW,
+  ERROR,
 }
 
 export enum GameState {

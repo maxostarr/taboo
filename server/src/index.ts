@@ -32,7 +32,12 @@ const newGame = (ws: WebSocket) => {
     jwtSecret,
   );
 
-  ws.send(jwtPayload);
+  ws.send(
+    JSON.stringify({
+      type: MessageType.NEW,
+      payload: jwtPayload,
+    }),
+  );
 };
 
 const joinGame = (ws: WebSocket, data: JoinOptions) => {
