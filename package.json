@@ -5,10 +5,12 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "dev:server": "nodemon"
+    "dev:server": "cd ./server & nodemon",
+    "dev:client": "yarn workspace client start"
   },
   "workspaces": [
     "server",
-    "client"
+    "client",
+    "shared"
   ]
 }
