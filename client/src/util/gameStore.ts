@@ -37,6 +37,10 @@ connection.onmessage = ({ data }) => {
   }
 };
 
+const sendToServer = (data: Message) => {
+  connection.send(JSON.stringify(data));
+};
+
 export const gameStore = {
   init: () => {
     playerState = { ...playerState };
@@ -48,10 +52,15 @@ export const gameStore = {
   playerInitialState,
 
   newGame: () => {
-    connection.send(
-      JSON.stringify({
-        type: MessageType.NEW,
-      }),
-    );
+    sendToServer({ type: MessageType.NEW, payload: null });
+  },
+
+  joinGame: (gameID: string) => {
+    sendToServer({
+      type: MessageType.JOIN,
+      payload: {
+        gameID,
+      },
+    });
   },
 };

@@ -81,14 +81,17 @@ const joinGame = (ws: WebSocket, data: JoinOptions) => {
   };
   games[gameID].players.push(newPlayer);
   ws.send(
-    jwt.sign(
-      JSON.stringify({
-        playerID: newPlayer.playerID,
-        gameID,
-        groupID,
-      } as Player),
-      jwtSecret,
-    ),
+    JSON.stringify({
+      type: MessageType.JOIN,
+      payload: jwt.sign(
+        JSON.stringify({
+          playerID: newPlayer.playerID,
+          gameID,
+          groupID,
+        } as Player),
+        jwtSecret,
+      ),
+    }),
   );
 };
 
