@@ -1,11 +1,14 @@
 import { Subject } from "rxjs";
 import jsonwebtoken from "jsonwebtoken";
 import { GameState, MessageType } from "../../../shared/src/defs";
+import { isJSDocUnknownType } from "typescript";
 
 const connection = new WebSocket("ws://localhost:3000/ws");
 
 const player = new Subject();
 const game = new Subject();
+
+game.subscribe(console.log);
 
 const playerInitialState = {
   playerID: "",
@@ -22,6 +25,7 @@ let playerState = playerInitialState;
 let gameState = gameInitialState;
 
 connection.onmessage = ({ data }) => {
+  console.log(data);
   const message = JSON.parse(data);
   console.log(message);
 
@@ -29,6 +33,7 @@ connection.onmessage = ({ data }) => {
     case MessageType.NEW: {
       try {
         const jwt = jsonwebtoken.decode(message.payload) as Player;
+        localStorage.setItem("jwt", message.payload);
         player.next(jwt);
         gameState = {
           ...gameState,
@@ -43,6 +48,7 @@ connection.onmessage = ({ data }) => {
     case MessageType.JOIN: {
       try {
         const jwt = jsonwebtoken.decode(message.payload);
+        localStorage.setItem("jwt", message.payload);
         player.next(jwt);
       } catch (e) {
         console.log(e);
@@ -78,7 +84,19 @@ connection.onmessage = ({ data }) => {
 };
 
 const sendToServer = (data: Message) => {
-  connection.send(JSON.stringify(data));
+  let jwt = localStorage.getItem("jwt");
+  // if (jwt) {
+  connection.send(
+    JSON.stringify({
+      ...data,
+      payload: {
+        ...data.payload,
+        jwt,
+      },
+    }),
+  );
+  // }
+  // connection.send(JSON.stringify(data));
 };
 
 export const gameStore = {
@@ -97,6 +115,8 @@ export const gameStore = {
   playerInitialState,
 
   newGame: () => {
+    gameState = gameInitialState;
+    game.next(gameState);
     sendToServer({ type: MessageType.NEW, payload: null });
   },
 

@@ -16,7 +16,11 @@ interface JoinOptions {
   groupID: string | null;
 }
 
+interface NewGameOptions {
+  jwt: string | null;
+}
+
 interface Message {
   type: MessageType;
-  payload: JoinOptions | any;
+  payload: JoinOptions | NewGameOptions | any;
 }

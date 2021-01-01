@@ -18,11 +18,12 @@ const Game = () => {
   }, []);
 
   const joinGame = () => gameStore.joinGame(gameIdToJoin);
-
+  const clearPlayer = () => localStorage.removeItem("jwt");
   return (
     <div>
       <div>
         <button onClick={gameStore.newGame}>New Game</button>
+        <button onClick={clearPlayer}>Clear Player</button>
         <p>Game: {player.gameID}</p>
         <p>Player: {player.playerID}</p>
       </div>

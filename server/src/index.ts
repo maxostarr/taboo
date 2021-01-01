@@ -17,21 +17,42 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-const newGame = (ws: WebSocket) => {
+const newGame = (ws: WebSocket, data: NewGameOptions) => {
   const gameID = uuid();
   games[gameID] = {
     players: [],
     state: GameState.NEW,
   };
 
+  let playerID: string | null = null;
+  if (data && data.jwt) {
+    try {
+      jwt.verify(data.jwt, jwtSecret);
+    } catch (e) {
+      ws.send("invalid jwt");
+      return;
+    }
+
+    const decoded = jwt.decode(data.jwt) as Player;
+    if (!decoded || typeof decoded === "string") {
+      ws.send("couldn't decode jwt");
+      return;
+    }
+
+    playerID = decoded.playerID;
+  }
+
   const newPlayer: Player = {
     gameID,
-    playerID: uuid(),
+    playerID: playerID ? playerID : uuid(),
     groupID: uuid(),
     websocket: ws,
   };
   games[gameID].players.push(newPlayer);
-  const jwtPayload = jwt.sign(JSON.stringify(newPlayer), jwtSecret);
+  const jwtPayload = jwt.sign(
+    JSON.stringify({ ...newPlayer, websocket: undefined }),
+    jwtSecret,
+  );
 
   ws.send(
     JSON.stringify({
@@ -58,7 +79,7 @@ const joinGame = (ws: WebSocket, data: JoinOptions) => {
       ws.send("invalid jwt");
       return;
     }
-    const decoded = jwt.decode(data.jwt);
+    const decoded = jwt.decode(data.jwt) as Player;
     if (!decoded || typeof decoded === "string") {
       ws.send("couldn't decode jwt");
       return;
@@ -70,6 +91,12 @@ const joinGame = (ws: WebSocket, data: JoinOptions) => {
     gameID = decoded.gameID;
     if (!gameID || !Object.keys(games).includes(gameID)) {
       ws.send("jwt unkown gameID");
+      return;
+    }
+    console.log(decoded.playerID);
+
+    if (games[gameID].players.find((p) => p.playerID === decoded.playerID)) {
+      ws.send("player already in game");
       return;
     }
     groupID = data.groupID ? data.groupID : uuid();
@@ -136,7 +163,7 @@ app.ws("/ws", function (ws, req) {
   ws.on("message", function (msg) {
     const parsed = JSON.parse(msg.toString()) as Message;
     if (parsed.type === MessageType.NEW) {
-      newGame(ws);
+      newGame(ws, parsed.payload);
     }
     if (parsed.type === MessageType.JOIN) {
       joinGame(ws, parsed.payload);
