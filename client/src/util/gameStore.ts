@@ -1,12 +1,16 @@
 import { Subject } from "rxjs";
 import jsonwebtoken from "jsonwebtoken";
-import { GameState, MessageType } from "../../../shared/src/defs";
-import { isJSDocUnknownType } from "typescript";
+import {
+  GameState,
+  MessageType,
+  ConnectionState,
+} from "../../../shared/src/defs";
 
 const connection = new WebSocket("ws://localhost:3000/ws");
 
 const player = new Subject();
 const game = new Subject();
+const serverConnection = new Subject();
 
 game.subscribe(console.log);
 
@@ -21,8 +25,21 @@ const gameInitialState = {
   state: GameState.NEW,
 } as Game;
 
+const connectionInitialState = ConnectionState.CONNECTING;
+
 let playerState = playerInitialState;
 let gameState = gameInitialState;
+let connectionState = connectionInitialState;
+
+connection.onclose = () => {
+  connectionState = ConnectionState.CLOSED;
+  serverConnection.next(connectionState);
+};
+
+connection.onopen = () => {
+  connectionState = ConnectionState.OPEN;
+  serverConnection.next(connectionState);
+};
 
 connection.onmessage = ({ data }) => {
   console.log(data);
@@ -37,7 +54,7 @@ connection.onmessage = ({ data }) => {
         player.next(jwt);
         gameState = {
           ...gameState,
-          players: [...gameState.players, jwt],
+          players: [jwt],
         };
         game.next(gameState);
       } catch (e) {
@@ -45,11 +62,12 @@ connection.onmessage = ({ data }) => {
       }
       break;
     }
-    case MessageType.JOIN: {
+    case MessageType.JOIN_GAME: {
       try {
-        const jwt = jsonwebtoken.decode(message.payload);
+        const jwt = jsonwebtoken.decode(message.payload) as Player;
         localStorage.setItem("jwt", message.payload);
-        player.next(jwt);
+        playerState = jwt;
+        player.next(playerState);
       } catch (e) {
         console.log(e);
       }
@@ -68,9 +86,36 @@ connection.onmessage = ({ data }) => {
       }
       break;
     }
+    case MessageType.UPDATE_PLAYER: {
+      try {
+        const jwt = jsonwebtoken.decode(message.payload) as Player;
+        console.log({ jwt, playerState });
+
+        if (jwt.playerID === playerState.playerID) {
+          playerState = jwt;
+          player.next(playerState);
+          localStorage.setItem("jwt", message.payload);
+        }
+        gameState.players = gameState.players.map((p) => {
+          if (p.playerID !== jwt.playerID) {
+            return p;
+          }
+          return jwt;
+        });
+
+        game.next({ ...gameState });
+      } catch (e) {
+        console.log(e);
+      }
+      break;
+    }
     case MessageType.PLAYERS_LIST: {
       try {
         const players = JSON.parse(message.payload);
+        gameState = {
+          ...gameState,
+          players,
+        } as Game;
         game.next({
           ...gameState,
           players,
@@ -105,14 +150,18 @@ export const gameStore = {
     gameState = { ...gameState };
     player.next(playerState);
     game.next(gameState);
+    serverConnection.next(connectionState);
   },
 
   subscribePlayer: (setState: (value: any) => void) =>
     player.subscribe(setState),
   subscribeGame: (setState: (value: any) => void) => game.subscribe(setState),
+  subscribeConnection: (setState: (value: any) => void) =>
+    serverConnection.subscribe(setState),
 
   gameInitialState,
   playerInitialState,
+  connectionInitialState,
 
   newGame: () => {
     gameState = gameInitialState;
@@ -122,9 +171,18 @@ export const gameStore = {
 
   joinGame: (gameID: string) => {
     sendToServer({
-      type: MessageType.JOIN,
+      type: MessageType.JOIN_GAME,
       payload: {
         gameID,
+      },
+    });
+  },
+
+  joinGroup: (groupID: string) => {
+    sendToServer({
+      type: MessageType.JOIN_GROUP,
+      payload: {
+        groupID,
       },
     });
   },

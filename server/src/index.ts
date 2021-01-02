@@ -62,16 +62,62 @@ const newGame = (ws: WebSocket, data: NewGameOptions) => {
   );
 };
 
-const joinGame = (ws: WebSocket, data: JoinOptions) => {
+const joinGroup = (ws: WebSocket, data: JoinGroupOptions) => {
+  if (!data.jwt) {
+    ws.send("unknown user");
+    return;
+  }
+  try {
+    jwt.verify(data.jwt, jwtSecret);
+  } catch (e) {
+    ws.send("invalid jwt");
+    return;
+  }
+  const decoded = jwt.decode(data.jwt) as Player;
+  if (!decoded || typeof decoded === "string") {
+    ws.send("couldn't decode jwt");
+    return;
+  }
+  if (!decoded.gameID) {
+    ws.send("must include game ID");
+    return;
+  }
+  const gameID = decoded.gameID;
+  const fullPlayer: Player = {
+    ...decoded,
+    groupID: data.groupID ? data.groupID : uuid(),
+    websocket: ws,
+  };
+  const playerIndex = games[gameID].players.findIndex(
+    (p) => p.playerID === decoded.playerID,
+  );
+  games[gameID].players[playerIndex] = fullPlayer;
+  games[gameID].players.forEach((player) => {
+    console.log("sending to", player.playerID);
+
+    player.websocket.send(
+      JSON.stringify({
+        type: MessageType.UPDATE_PLAYER,
+        payload: jwt.sign(
+          JSON.stringify({
+            ...fullPlayer,
+            websocket: undefined,
+          } as Player),
+          jwtSecret,
+        ),
+      }),
+    );
+  });
+};
+
+const joinGame = (ws: WebSocket, data: JoinGameOptions) => {
   let gameID: string;
-  let groupID: string;
   if (!data.jwt) {
     if (!data.gameID || !Object.keys(games).includes(data.gameID)) {
       ws.send("must specify a valid game to join");
       return;
     }
     gameID = data.gameID;
-    groupID = data.groupID ? data.groupID : uuid();
   } else {
     try {
       jwt.verify(data.jwt, jwtSecret);
@@ -84,34 +130,24 @@ const joinGame = (ws: WebSocket, data: JoinOptions) => {
       ws.send("couldn't decode jwt");
       return;
     }
-    if (!decoded.gameID) {
-      ws.send("jwt must include gameID");
-      return;
-    }
-    gameID = decoded.gameID;
+    gameID = data.gameID;
     if (!gameID || !Object.keys(games).includes(gameID)) {
       ws.send("jwt unkown gameID");
       return;
     }
-    console.log(decoded.playerID);
-
     if (games[gameID].players.find((p) => p.playerID === decoded.playerID)) {
       ws.send("player already in game");
       return;
     }
-    groupID = data.groupID ? data.groupID : uuid();
   }
   const newPlayer: Player = {
     gameID,
-    groupID,
+    groupID: null,
     playerID: uuid(),
     websocket: ws,
   };
-  console.log(games);
 
   games[gameID].players.forEach((player) => {
-    console.log("sending to", player.playerID);
-
     player.websocket.send(
       JSON.stringify({
         type: MessageType.ADD_PLAYER,
@@ -119,7 +155,7 @@ const joinGame = (ws: WebSocket, data: JoinOptions) => {
           JSON.stringify({
             playerID: newPlayer.playerID,
             gameID,
-            groupID,
+            groupID: null,
           } as Player),
           jwtSecret,
         ),
@@ -146,12 +182,12 @@ const joinGame = (ws: WebSocket, data: JoinOptions) => {
 
   ws.send(
     JSON.stringify({
-      type: MessageType.JOIN,
+      type: MessageType.JOIN_GAME,
       payload: jwt.sign(
         JSON.stringify({
           playerID: newPlayer.playerID,
           gameID,
-          groupID,
+          groupID: null,
         } as Player),
         jwtSecret,
       ),
@@ -165,11 +201,13 @@ app.ws("/ws", function (ws, req) {
     if (parsed.type === MessageType.NEW) {
       newGame(ws, parsed.payload);
     }
-    if (parsed.type === MessageType.JOIN) {
+    if (parsed.type === MessageType.JOIN_GAME) {
       joinGame(ws, parsed.payload);
     }
+    if (parsed.type === MessageType.JOIN_GROUP) {
+      joinGroup(ws, parsed.payload);
+    }
   });
-  console.log("socket", req.ip);
 });
 
 app.listen(port, () => {
