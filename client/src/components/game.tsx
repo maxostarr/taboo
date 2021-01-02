@@ -43,6 +43,7 @@ const Game = () => {
 
   const joinGame = () => gameStore.joinGame(gameIdToJoin);
   const joinGroup = (groupID: string) => gameStore.joinGroup(groupID);
+  const newGroup = () => gameStore.joinGroup();
   const clearPlayer = () => localStorage.removeItem("jwt");
 
   return (
@@ -76,6 +77,7 @@ const Game = () => {
           onChange={(e) => setGameIdToJoin(e.target.value)}
         />
         <button onClick={joinGame}>Join Game</button>
+        <button onClick={newGroup}>New Group</button>
       </div>
       <div>
         {Object.keys(groups).map((group) => (

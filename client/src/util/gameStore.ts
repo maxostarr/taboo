@@ -41,88 +41,110 @@ connection.onopen = () => {
   serverConnection.next(connectionState);
 };
 
+const updatePlayerState = (newState: Player) => {
+  playerState = newState;
+  player.next(playerState);
+};
+
+const updateGameState = (newState: Game) => {
+  gameState = newState;
+  game.next(gameState);
+};
+
+const newGame = (message: Message) => {
+  try {
+    const jwt = jsonwebtoken.decode(message.payload) as Player;
+    localStorage.setItem("jwt", message.payload);
+
+    updatePlayerState(jwt);
+    updateGameState({
+      ...gameState,
+      players: [jwt],
+    });
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+const joinGame = (message: Message) => {
+  try {
+    const jwt = jsonwebtoken.decode(message.payload) as Player;
+    localStorage.setItem("jwt", message.payload);
+    updatePlayerState(jwt);
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+const addPlayer = (message: Message) => {
+  try {
+    const jwt = jsonwebtoken.decode(message.payload) as Player;
+    updateGameState({
+      ...gameState,
+      players: [...gameState.players, jwt],
+    });
+  } catch (e) {
+    console.log(e);
+  }
+};
+const updatePlayer = (message: Message) => {
+  try {
+    const jwt = jsonwebtoken.decode(message.payload) as Player;
+
+    if (jwt.playerID === playerState.playerID) {
+      updatePlayerState(jwt);
+      localStorage.setItem("jwt", message.payload);
+    }
+    const newPlayers = gameState.players.map((p) => {
+      if (p.playerID !== jwt.playerID) {
+        return p;
+      }
+      return jwt;
+    });
+    updateGameState({
+      ...gameState,
+      players: newPlayers,
+    });
+  } catch (e) {
+    console.log(e);
+  }
+};
+const playerList = (message: Message) => {
+  try {
+    const players = JSON.parse(message.payload);
+    updateGameState({
+      ...gameState,
+      players,
+    } as Game);
+  } catch (e) {
+    console.log(e);
+  }
+};
+
 connection.onmessage = ({ data }) => {
   console.log(data);
-  const message = JSON.parse(data);
+  const message = JSON.parse(data) as Message;
   console.log(message);
 
   switch (message.type) {
     case MessageType.NEW: {
-      try {
-        const jwt = jsonwebtoken.decode(message.payload) as Player;
-        localStorage.setItem("jwt", message.payload);
-        player.next(jwt);
-        gameState = {
-          ...gameState,
-          players: [jwt],
-        };
-        game.next(gameState);
-      } catch (e) {
-        console.log(e);
-      }
+      newGame(message);
       break;
     }
     case MessageType.JOIN_GAME: {
-      try {
-        const jwt = jsonwebtoken.decode(message.payload) as Player;
-        localStorage.setItem("jwt", message.payload);
-        playerState = jwt;
-        player.next(playerState);
-      } catch (e) {
-        console.log(e);
-      }
+      joinGame(message);
       break;
     }
     case MessageType.ADD_PLAYER: {
-      try {
-        const jwt = jsonwebtoken.decode(message.payload) as Player;
-        gameState = {
-          ...gameState,
-          players: [...gameState.players, jwt],
-        };
-        game.next(gameState);
-      } catch (e) {
-        console.log(e);
-      }
+      addPlayer(message);
       break;
     }
     case MessageType.UPDATE_PLAYER: {
-      try {
-        const jwt = jsonwebtoken.decode(message.payload) as Player;
-        console.log({ jwt, playerState });
-
-        if (jwt.playerID === playerState.playerID) {
-          playerState = jwt;
-          player.next(playerState);
-          localStorage.setItem("jwt", message.payload);
-        }
-        gameState.players = gameState.players.map((p) => {
-          if (p.playerID !== jwt.playerID) {
-            return p;
-          }
-          return jwt;
-        });
-
-        game.next({ ...gameState });
-      } catch (e) {
-        console.log(e);
-      }
+      updatePlayer(message);
       break;
     }
     case MessageType.PLAYERS_LIST: {
-      try {
-        const players = JSON.parse(message.payload);
-        gameState = {
-          ...gameState,
-          players,
-        } as Game;
-        game.next({
-          ...gameState,
-          players,
-        } as Game);
-      } catch (e) {
-        console.log(e);
-      }
+      playerList(message);
       break;
     }
   }
@@ -178,7 +200,7 @@ export const gameStore = {
     });
   },
 
-  joinGroup: (groupID: string) => {
+  joinGroup: (groupID: string | null = null) => {
     sendToServer({
       type: MessageType.JOIN_GROUP,
       payload: {

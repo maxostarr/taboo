@@ -10,6 +10,7 @@ export enum MessageType {
 
 export enum GameState {
   NEW,
+  READY,
   PLAYING,
   PASSING,
   STOPPED,
