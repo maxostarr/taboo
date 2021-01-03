@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState } from "react";
-import { ConnectionState } from "../../../shared/src/defs";
+import { ConnectionState, GameState } from "../../../shared/src/defs";
 import { gameStore } from "../util/gameStore";
 
 const Game = () => {
@@ -57,6 +57,14 @@ const Game = () => {
               return "OPEN";
             case ConnectionState.CONNECTING:
               return "CONNECTING";
+          }
+        })()}{" "}
+        {(() => {
+          switch (game.state) {
+            case GameState.NEW:
+              return "NEW";
+            case GameState.READY:
+              return "READY";
           }
         })()}
       </p>

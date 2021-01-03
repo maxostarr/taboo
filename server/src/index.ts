@@ -4,7 +4,7 @@ import expressWs from "express-ws";
 import jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import { MessageType, GameState } from "../../shared/src/defs";
-const { app, getWss, applyTo } = expressWs(express());
+const { app } = expressWs(express());
 const port = process.env.PORT ? (+process.env.PORT as number) : 3000;
 
 const jwtSecret = "dsflkghaskifgjAWHIH";
@@ -28,6 +28,48 @@ const sendError = (ws: WebSocket, payload: string) => {
 
 const sendMessage = (ws: WebSocket, payload: Message) => {
   ws.send(JSON.stringify(payload));
+};
+
+interface Groups {
+  [key: string]: Player[];
+}
+
+const checkGameReady = (gameID: string) => {
+  const game = games[gameID];
+  const groups = game.players.reduce((prev: Groups, player) => {
+    if (!player.groupID) {
+      if (!prev.waiting) {
+        prev.waiting = [];
+      }
+      return {
+        ...prev,
+        waiting: [...prev.waiting, player],
+      } as Groups;
+    }
+    const groupID = player.groupID;
+    if (!prev[groupID]) {
+      prev[groupID] = [];
+    }
+    return {
+      ...prev,
+      [groupID]: [...prev[groupID], player],
+    };
+  }, {});
+  console.log(groups);
+
+  if (groups.waiting && groups.waiting.length > 0) return false;
+  console.log("no waiting");
+
+  if (Object.keys(groups).length < 2) return false;
+  console.log("enough groups");
+  for (const id in groups) {
+    if (id === "waiting") continue;
+    if (groups[id].length !== 2) return false;
+    console.log(`group ${id} is full`);
+  }
+  console.log("game ready");
+
+  return true;
 };
 
 const newGame = (ws: WebSocket, data: NewGameOptions) => {
@@ -106,7 +148,7 @@ const joinGroup = (ws: WebSocket, data: JoinGroupOptions) => {
   games[gameID].players.forEach((player) => {
     console.log("sending to", player.playerID);
 
-    sendMessage(player.websocket.send, {
+    sendMessage(player.websocket, {
       type: MessageType.UPDATE_PLAYER,
       payload: jwt.sign(
         {
@@ -115,6 +157,20 @@ const joinGroup = (ws: WebSocket, data: JoinGroupOptions) => {
         } as Player,
         jwtSecret,
       ),
+    });
+  });
+
+  if (checkGameReady(gameID)) {
+    games[gameID].state = GameState.READY;
+  } else {
+    games[gameID].state = GameState.NEW;
+  }
+  games[gameID].players.forEach((p) => {
+    sendMessage(p.websocket, {
+      type: MessageType.UPDATE_GAME,
+      payload: {
+        state: games[gameID].state,
+      } as Game,
     });
   });
 };
@@ -157,7 +213,7 @@ const joinGame = (ws: WebSocket, data: JoinGameOptions) => {
   };
 
   games[gameID].players.forEach((player) => {
-    sendMessage(player.websocket.send, {
+    sendMessage(player.websocket, {
       type: MessageType.ADD_PLAYER,
       payload: jwt.sign(
         {
@@ -195,6 +251,18 @@ const joinGame = (ws: WebSocket, data: JoinGameOptions) => {
       jwtSecret,
     ),
   });
+
+  if (checkGameReady(gameID)) {
+    games[gameID].players.forEach((p) => {
+      sendMessage(p.websocket, {
+        type: MessageType.UPDATE_GAME,
+        payload: {
+          ...games[gameID],
+          state: GameState.READY,
+        } as Game,
+      });
+    });
+  }
 };
 
 app.ws("/ws", function (ws, req) {

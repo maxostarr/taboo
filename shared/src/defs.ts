@@ -4,6 +4,7 @@ export enum MessageType {
   JOIN_GROUP,
   ADD_PLAYER,
   UPDATE_PLAYER,
+  UPDATE_GAME,
   PLAYERS_LIST,
   ERROR,
 }

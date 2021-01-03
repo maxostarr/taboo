@@ -109,12 +109,25 @@ const updatePlayer = (message: Message) => {
     console.log(e);
   }
 };
+
 const playerList = (message: Message) => {
   try {
     const players = JSON.parse(message.payload);
     updateGameState({
       ...gameState,
       players,
+    } as Game);
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+const updateGame = (message: Message) => {
+  try {
+    const newGame = message.payload;
+    updateGameState({
+      ...gameState,
+      ...newGame,
     } as Game);
   } catch (e) {
     console.log(e);
@@ -145,6 +158,10 @@ connection.onmessage = ({ data }) => {
     }
     case MessageType.PLAYERS_LIST: {
       playerList(message);
+      break;
+    }
+    case MessageType.UPDATE_GAME: {
+      updateGame(message);
       break;
     }
   }
