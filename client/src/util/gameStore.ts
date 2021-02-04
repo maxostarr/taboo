@@ -15,7 +15,7 @@ const serverConnection = new Subject();
 game.subscribe(console.log);
 
 const playerInitialState = {
-  playerID: "",
+  _id: "",
   gameID: "",
   groupID: "",
 } as Player;
@@ -91,12 +91,12 @@ const updatePlayer = (message: Message) => {
   try {
     const jwt = jsonwebtoken.decode(message.payload) as Player;
 
-    if (jwt.playerID === playerState.playerID) {
+    if (jwt._id === playerState._id) {
       updatePlayerState(jwt);
       localStorage.setItem("jwt", message.payload);
     }
     const newPlayers = gameState.players.map((p) => {
-      if (p.playerID !== jwt.playerID) {
+      if (p._id !== jwt._id) {
         return p;
       }
       return jwt;

@@ -5,10 +5,12 @@
   "license": "MIT",
   "dependencies": {
     "@types/express-ws": "^3.0.0",
+    "@types/nedb": "^1.8.11",
     "@types/uuid": "^8.3.0",
     "express": "^4.17.1",
     "express-ws": "^4.0.0",
     "jsonwebtoken": "^8.5.1",
+    "nedb-promises": "^4.1.1",
     "typescript": "^4.1.3",
     "uuid": "^8.3.2",
     "websocket": "^1.0.33"

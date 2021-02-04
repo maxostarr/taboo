@@ -32,13 +32,13 @@ const Game = () => {
       if (!groups["waiting"]) {
         groups["waiting"] = [];
       }
-      groups["waiting"].push(p.playerID);
+      groups["waiting"].push(p._id);
       return;
     }
     if (!groups[p.groupID]) {
       groups[p.groupID] = [];
     }
-    groups[p.groupID].push(p.playerID);
+    groups[p.groupID].push(p._id);
   });
 
   const joinGame = () => gameStore.joinGame(gameIdToJoin);
@@ -72,7 +72,7 @@ const Game = () => {
         <button onClick={gameStore.newGame}>New Game</button>
         <button onClick={clearPlayer}>Clear Player</button>
         <p>Game: {player.gameID}</p>
-        <p>Player: {player.playerID}</p>
+        <p>Player: {player._id}</p>
         <p>Group: {player.groupID}</p>
       </div>
       <div>

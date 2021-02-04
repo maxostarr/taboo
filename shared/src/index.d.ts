@@ -1,12 +1,16 @@
+type GameID = string;
+type PlayerID = string;
+
 interface Player {
-  websocket: import("ws").WebSocket | undefined;
-  playerID: string;
+  _id: PlayerID;
+  // websocket: import("ws").WebSocket | undefined;
   groupID: string | null;
   gameID: string;
 }
 
 interface Game {
-  players: Player[];
+  _id: GameID;
+  players: PlayerID[];
   state: GameState;
 }
 
@@ -27,4 +31,10 @@ interface NewGameOptions {
 interface Message {
   type: MessageType;
   payload: JoinGameOptions | NewGameOptions | JoinGroupOptions | any;
+}
+
+interface Round {
+  reader: PlayerID;
+  guesser: PlayerID;
+  groupID: string;
 }

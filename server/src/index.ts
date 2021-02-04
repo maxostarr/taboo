@@ -4,9 +4,9 @@ import expressWs from "express-ws";
 import jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import { MessageType, GameState } from "../../shared/src/defs";
+
 const { app } = expressWs(express());
 const port = process.env.PORT ? (+process.env.PORT as number) : 3000;
-
 const jwtSecret = "dsflkghaskifgjAWHIH";
 
 let games: {
@@ -77,6 +77,7 @@ const newGame = (ws: WebSocket, data: NewGameOptions) => {
   games[gameID] = {
     players: [],
     state: GameState.NEW,
+    _id: gameID,
   };
 
   let playerID: string | null = null;
@@ -94,12 +95,12 @@ const newGame = (ws: WebSocket, data: NewGameOptions) => {
       return;
     }
 
-    playerID = decoded.playerID;
+    playerID = decoded._id;
   }
 
   const newPlayer: Player = {
     gameID,
-    playerID: playerID ? playerID : uuid(),
+    _id: playerID ? playerID : uuid(),
     groupID: uuid(),
     websocket: ws,
   };
@@ -142,11 +143,11 @@ const joinGroup = (ws: WebSocket, data: JoinGroupOptions) => {
     websocket: ws,
   };
   const playerIndex = games[gameID].players.findIndex(
-    (p) => p.playerID === decoded.playerID,
+    (p) => p._id === decoded._id,
   );
   games[gameID].players[playerIndex] = fullPlayer;
   games[gameID].players.forEach((player) => {
-    console.log("sending to", player.playerID);
+    console.log("sending to", player._id);
 
     sendMessage(player.websocket, {
       type: MessageType.UPDATE_PLAYER,
@@ -200,7 +201,7 @@ const joinGame = (ws: WebSocket, data: JoinGameOptions) => {
       sendError(ws, "jwt unkown gameID");
       return;
     }
-    if (games[gameID].players.find((p) => p.playerID === decoded.playerID)) {
+    if (games[gameID].players.find((p) => p._id === decoded._id)) {
       sendError(ws, "player already in game");
       return;
     }
@@ -208,7 +209,7 @@ const joinGame = (ws: WebSocket, data: JoinGameOptions) => {
   const newPlayer: Player = {
     gameID,
     groupID: null,
-    playerID: uuid(),
+    _id: uuid(),
     websocket: ws,
   };
 
@@ -217,7 +218,7 @@ const joinGame = (ws: WebSocket, data: JoinGameOptions) => {
       type: MessageType.ADD_PLAYER,
       payload: jwt.sign(
         {
-          playerID: newPlayer.playerID,
+          _id: newPlayer._id,
           gameID,
           groupID: null,
         } as Player,
@@ -244,7 +245,7 @@ const joinGame = (ws: WebSocket, data: JoinGameOptions) => {
     type: MessageType.JOIN_GAME,
     payload: jwt.sign(
       {
-        playerID: newPlayer.playerID,
+        _id: newPlayer._id,
         gameID,
         groupID: null,
       } as Player,
