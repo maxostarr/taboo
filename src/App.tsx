@@ -1,4 +1,4 @@
-import { FunctionComponent } from "react";
+import React, { FunctionComponent } from "react";
 import {
   BrowserRouter as Router,
   Switch,
@@ -9,6 +9,7 @@ import {
 import { useAuthStatePrimed } from "./firebaseHooks";
 import Games from "./pages/games";
 import Login from "./pages/login";
+import { UserContextProvider } from "./utils/userContext";
 
 function App() {
   return (
@@ -17,9 +18,11 @@ function App() {
         <Route path="/login">
           <Login />
         </Route>
-        <AuthProtectedRoute path="/">
-          <Games />
-        </AuthProtectedRoute>
+        <UserContextProvider>
+          <AuthProtectedRoute path="/">
+            <Games />
+          </AuthProtectedRoute>
+        </UserContextProvider>
       </Switch>
     </Router>
   );
