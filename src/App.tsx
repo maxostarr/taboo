@@ -7,6 +7,7 @@ import {
   Redirect,
 } from "react-router-dom";
 import { useAuthStatePrimed } from "./firebaseHooks";
+import Game from "./pages/game";
 import Games from "./pages/games";
 import Login from "./pages/login";
 import { UserContextProvider } from "./utils/userContext";
@@ -19,9 +20,14 @@ function App() {
           <Login />
         </Route>
         <UserContextProvider>
-          <AuthProtectedRoute path="/">
-            <Games />
-          </AuthProtectedRoute>
+          <Switch>
+            <AuthProtectedRoute path="/:id">
+              <Game />
+            </AuthProtectedRoute>
+            <AuthProtectedRoute path="/">
+              <Games />
+            </AuthProtectedRoute>
+          </Switch>
         </UserContextProvider>
       </Switch>
     </Router>

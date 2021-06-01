@@ -1,5 +1,6 @@
 import {
   useCollection,
+  useCollectionData,
   useDocumentData,
   useDocumentDataOnce,
 } from "react-firebase-hooks/firestore";
@@ -11,23 +12,56 @@ import { useEffect, useState } from "react";
 firebase.initializeApp(firebaseConfig);
 
 const authProvider = new firebase.auth.GoogleAuthProvider();
-authProvider.addScope("email");
+// authProvider.addScope("email");
 // authProvider.addScope("user_friends");
 
+interface Game {
+  name: string;
+  state: string;
+  createdAt: number;
+  leader: string;
+}
+
 export const useGetAllGamesNames = () => {
-  const [value, loading, error] = useCollection(
+  const [value, loading, error] = useCollectionData<Game>(
     firebase.firestore().collection("games"),
     {
       snapshotListenOptions: { includeMetadataChanges: true },
+      idField: "id",
     },
   );
-  if (!loading) {
-    const names = value.docs.map((doc: any) => doc.data().name);
-    console.log(names);
+  if (!loading && !error) {
+    // const names = value.docs.map((doc: any) => doc.data().name);
+    // const ids = value.docs.map((doc: any) => doc.data().uid);
+    // console.log(names, value.docs[0].data());
 
-    return [names, loading, error];
+    return value
+      ? ([value, loading, error] as const)
+      : ([
+          [
+            {
+              name: "No games",
+              state: "INVALID",
+            },
+          ] as any as Game[],
+          loading,
+          error,
+        ] as const);
   }
-  return [undefined, loading, error];
+
+  return [[] as any as Game[], loading, error] as const;
+};
+
+export const addNewGame = () => {
+  firebase
+    .firestore()
+    .collection("games")
+    .add({
+      name: "New Game",
+      state: "starting",
+      createdAt: Date.now(),
+      leader: firebase.auth().currentUser?.uid,
+    } as firebase.firestore.DocumentData);
 };
 
 export const login = async () => {
