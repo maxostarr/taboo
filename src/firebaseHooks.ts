@@ -71,10 +71,22 @@ export const login = async () => {
 export const logout = () => {
   firebase.auth().signOut();
 };
-
 interface UserData {
   name: string;
 }
+
+export const useUserDataOnce = (id: string | undefined) => {
+  return useDocumentDataOnce<UserData>(
+    firebase.firestore().collection("players").doc(id),
+  );
+};
+
+export const useLeaderUserData = (gameID: string) => {
+  const [gameInfo] = useDocumentDataOnce<Game>(
+    firebase.firestore().collection("games").doc(gameID),
+  );
+  return useUserDataOnce(gameInfo?.leader);
+};
 
 export const useUserData = (userID: string) => {
   return useDocumentData<UserData>(

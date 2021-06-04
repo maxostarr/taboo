@@ -1,14 +1,23 @@
-import React, { FunctionComponent } from "react";
-import { RouteChildrenProps, useRouteMatch } from "react-router";
+import React from "react";
+import { useRouteMatch } from "react-router";
+import { useLeaderUserData, useUserDataOnce } from "../firebaseHooks";
 
-const Game: FunctionComponent = () => {
+const Game = () => {
   const {
     params: { id },
   } = useRouteMatch<{ id: string }>();
+  const [leader, loading, error] = useLeaderUserData(id);
+  console.log(id, leader, loading, error);
+
   // console.log("🚀 ~ file: game.tsx ~ line 6 ~ params", params);
   // const { id } = params;
 
-  return <div>{id}</div>;
+  return (
+    <div>
+      <p>{id}</p>
+      <p>{leader?.name}</p>
+    </div>
+  );
   // return <div></div>;
 };
 
