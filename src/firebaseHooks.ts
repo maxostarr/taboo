@@ -7,7 +7,6 @@ import {
 import { useAuthState } from "react-firebase-hooks/auth";
 import firebase from "firebase";
 import { firebaseConfig } from "./firebase.config";
-import { useEffect, useState } from "react";
 // import { useStoredUsername } from "./localstorageHooks";
 firebase.initializeApp(firebaseConfig);
 
@@ -15,12 +14,16 @@ const authProvider = new firebase.auth.GoogleAuthProvider();
 // authProvider.addScope("email");
 // authProvider.addScope("user_friends");
 
+interface UserData {
+  name: string;
+}
 interface Game {
   name: string;
   state: string;
   createdAt: number;
   leader: string;
-  players: string[];
+  playerIDs: string[];
+  players?: UserData[];
 }
 
 export const useGetAllGamesNames = () => {
@@ -62,7 +65,7 @@ export const addNewGame = () => {
       state: "starting",
       createdAt: Date.now(),
       leader: firebase.auth().currentUser?.uid,
-      players: [],
+      playerIDs: [firebase.auth().currentUser?.uid],
     } as firebase.firestore.DocumentData);
 };
 
@@ -73,9 +76,6 @@ export const login = async () => {
 export const logout = () => {
   firebase.auth().signOut();
 };
-interface UserData {
-  name: string;
-}
 
 export const useUserDataOnce = (id: string | undefined) => {
   return useDocumentDataOnce<UserData>(
@@ -83,20 +83,20 @@ export const useUserDataOnce = (id: string | undefined) => {
   );
 };
 
-// export const useLeaderUserData = (gameID: string) => {
-//   const [gameInfo] = useDocumentDataOnce<Game>(
-//     firebase.firestore().collection("games").doc(gameID),
-//   );
-//   return useUserDataOnce(gameInfo?.leader);
-// };
-
 export const useGameData = (gameID: string) => {
-  return useDocumentData<Game>(
+  const [game, loading, error] = useDocumentData<Game>(
     firebase.firestore().collection("games").doc(gameID),
   );
+  if (game) {
+    const players = game?.playerIDs
+      .map(useUserData)
+      .map((data) => data[0])
+      .filter((p) => p !== undefined);
+    game.players = players;
+  }
 };
 
-export const useUserData = (userID: string) => {
+export const useUserData = (userID: string | undefined) => {
   return useDocumentData<UserData>(
     firebase.firestore().collection("players").doc(userID),
   );
