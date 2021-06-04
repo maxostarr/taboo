@@ -20,6 +20,7 @@ interface Game {
   state: string;
   createdAt: number;
   leader: string;
+  players: string[];
 }
 
 export const useGetAllGamesNames = () => {
@@ -61,6 +62,7 @@ export const addNewGame = () => {
       state: "starting",
       createdAt: Date.now(),
       leader: firebase.auth().currentUser?.uid,
+      players: [],
     } as firebase.firestore.DocumentData);
 };
 
