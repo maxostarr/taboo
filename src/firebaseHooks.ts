@@ -81,11 +81,17 @@ export const useUserDataOnce = (id: string | undefined) => {
   );
 };
 
-export const useLeaderUserData = (gameID: string) => {
-  const [gameInfo] = useDocumentDataOnce<Game>(
+// export const useLeaderUserData = (gameID: string) => {
+//   const [gameInfo] = useDocumentDataOnce<Game>(
+//     firebase.firestore().collection("games").doc(gameID),
+//   );
+//   return useUserDataOnce(gameInfo?.leader);
+// };
+
+export const useGameData = (gameID: string) => {
+  return useDocumentData<Game>(
     firebase.firestore().collection("games").doc(gameID),
   );
-  return useUserDataOnce(gameInfo?.leader);
 };
 
 export const useUserData = (userID: string) => {

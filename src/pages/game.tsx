@@ -1,13 +1,13 @@
 import React from "react";
 import { useRouteMatch } from "react-router";
-import { useLeaderUserData, useUserDataOnce } from "../firebaseHooks";
+import { useGameData, useUserDataOnce } from "../firebaseHooks";
 
 const Game = () => {
   const {
     params: { id },
   } = useRouteMatch<{ id: string }>();
-  const [leader, loading, error] = useLeaderUserData(id);
-  console.log(id, leader, loading, error);
+  const [game, game_loading, game_error] = useGameData(id);
+  const [leader, leader_loading, leader_error] = useUserDataOnce(game?.leader);
 
   // console.log("🚀 ~ file: game.tsx ~ line 6 ~ params", params);
   // const { id } = params;
