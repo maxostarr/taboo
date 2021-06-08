@@ -25,6 +25,11 @@ export interface Game {
   players?: UserData[];
 }
 
+export interface Group {
+  name: string,
+  playerIDs: string[];
+}
+
 export const useGetAllGamesNames = () => {
   const [value, loading, error] = useCollectionData<Game>(
     firebase.firestore().collection("games"),
@@ -81,22 +86,17 @@ export const useGameData = (gameID: string) => {
   );
 };
 
-
 export const useAuthStatePrimed = () => {
-  // const [userData, setUserData] = useState({});
   return useAuthState(firebase.auth());
-  // if (baseUser) {
-  //   firebase
-  //     .firestore()
-  //     .collection("players")
-  //     .doc(baseUser.uid)
-  //     .onSnapshot((userSnapshot) => {
-  //       const userSnapshotData = userSnapshot.data();
-  //       console.log(userSnapshotData);
-  //       console.log(baseUser.uid);
-
-  //       if (userSnapshotData) setUserData(userSnapshotData);
-  //     });
-  // }
-  // return [baseUser, userData, loading, error];
 };
+
+export const useGroupData = (gameID: string, groupID: string) => {
+  return useDocumentData<Group>(
+    firebase
+      .firestore()
+      .collection("games")
+      .doc(gameID)
+      .collection("groups")
+      .doc(groupID)
+  )
+}

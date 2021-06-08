@@ -18,9 +18,11 @@ const Game = () => {
   // console.log("🚀 ~ file: game.tsx ~ line 6 ~ params", params);
   // const { id } = params;
   if(user_loading || game_loading || leader_loading || !game)
-    return <p>Loading...</p>
+  return <p>Loading...</p>
   
   const players = game?.playerIDs.map(pid=><Player key={pid} id={pid} />);
+  // const groups = game?.groups.map(pid=><Player key={pid} id={pid} />);
+  console.log("🚀 ~ file: game.tsx ~ line 17 ~ Game ~ game", game)
   if(user && game.state === "starting" && !game?.playerIDs.includes(user.uid))
     joinGame(id)
   

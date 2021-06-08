@@ -35,6 +35,10 @@ export const createNewGame = functions.https.onCall(async (name, context) => {
     playerIDs: [context.auth.uid],
   }
   const newGameDBEntry = await db.collection("games").add(newGameData)
+  await newGameDBEntry.collection("groups").add({
+    name: "Group 1",
+    playerIDs: [context.auth.uid],
+  })
   return newGameDBEntry.id
 })
 
