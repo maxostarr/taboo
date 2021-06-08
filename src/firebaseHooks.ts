@@ -84,16 +84,17 @@ export const useUserDataOnce = (id: string | undefined) => {
 };
 
 export const useGameData = (gameID: string) => {
-  const [game, loading, error] = useDocumentData<Game>(
+  return useDocumentData<Game>(
     firebase.firestore().collection("games").doc(gameID),
   );
-  if (game) {
-    const players = game?.playerIDs
-      .map(useUserData)
-      .map((data) => data[0])
-      .filter((p) => p !== undefined);
-    game.players = players;
-  }
+  // if (game) {
+  //   const players = game?.playerIDs
+  //     .map(useUserData)
+  //     .map((data) => data[0])
+  //     .filter((p) => p !== undefined);
+  //   game.players = players;
+  // }
+
 };
 
 export const useUserData = (userID: string | undefined) => {
