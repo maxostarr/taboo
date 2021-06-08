@@ -13,12 +13,6 @@ const authProvider = new firebase.auth.GoogleAuthProvider();
 // authProvider.addScope("email");
 // authProvider.addScope("user_friends");
 
-firebase.functions()
-
-const createNewGame = firebase.functions().httpsCallable("createNewGame")
-
-export const addNewGame = (name: string) => createNewGame(name);
-
 export interface UserData {
   name: string;
 }

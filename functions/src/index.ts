@@ -37,3 +37,12 @@ export const createNewGame = functions.https.onCall(async (name, context) => {
   const newGameDBEntry = await db.collection("games").add(newGameData)
   return newGameDBEntry.id
 })
+
+export const joinGame = functions.https.onCall(async (gameId, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('failed-precondition', 'The function must be called while authenticated.');
+  }
+  await db.collection("games").doc(gameId).update({
+    playerIDs: admin.firestore.FieldValue.arrayUnion(context.auth.uid)
+  })
+})

@@ -1,21 +1,31 @@
-import React from "react";
+import firebase from "firebase";
+import React, { useContext } from "react";
 import { useRouteMatch } from "react-router";
 import Player from "../components/player";
-import { useGameData, useUserData } from "../utils/firebaseHooks";
+import { joinGame } from "../utils/firebaseFunctions";
+import { useAuthStatePrimed, useGameData, useUserData } from "../utils/firebaseHooks";
+import { UserContext } from "../utils/userContext";
 
 const Game = () => {
   const {
     params: { id },
   } = useRouteMatch<{ id: string }>();
+  // const { baseUser, userData } = useContext(UserContext);
+  const [user, user_loading] = useAuthStatePrimed();
   const [game, game_loading, game_error] = useGameData(id);
   const [leader, leader_loading, leader_error] = useUserData(game?.leader);
-  const players = game?.playerIDs.map(p=><Player id={p} />)
   // console.log("🚀 ~ file: game.tsx ~ line 6 ~ params", params);
   // const { id } = params;
-
-  return (
+  if(user_loading || game_loading || leader_loading || !game)
+  return <p>Loading...</p>
+  
+  const players = game?.playerIDs.map(pid=><Player key={pid} id={pid} />);
+  if(user && !game?.playerIDs.includes(user.uid))
+    joinGame(id)
+  
+    return (
     <div>
-      <p>{id}</p>
+      <p>{game.name}</p>
       <p>{leader?.name}</p>
       <h2>Players</h2>
       {players}

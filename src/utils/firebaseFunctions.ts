@@ -1,6 +1,8 @@
 import firebase from "firebase";
-const { httpsCallable } = firebase.functions()
+firebase.functions()
 
-const createNewGame = httpsCallable("createNewGame")
+const addNewGameFunction = firebase.functions().httpsCallable("createNewGame")
+const joinGameFunction = firebase.functions().httpsCallable("joinGame")
 
-export const addNewGame = (name: string) => createNewGame(name);
+export const addNewGame = (name: string) => addNewGameFunction(name);
+export const joinGame = (id: string) => joinGameFunction(id);

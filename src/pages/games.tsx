@@ -1,6 +1,7 @@
 import React, { useContext, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
-import { addNewGame, logout, useGetAllGamesNames } from "../utils/firebaseHooks";
+import { addNewGame } from "../utils/firebaseFunctions";
+import { logout, useGetAllGamesNames } from "../utils/firebaseHooks";
 import { UserContext } from "../utils/userContext";
 
 const Games = () => {
