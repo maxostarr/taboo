@@ -1,9 +1,11 @@
-import React, { useContext } from "react";
-import { Link } from "react-router-dom";
-import { logout, addNewGame, useGetAllGamesNames } from "../firebaseHooks";
+import React, { useContext, useState } from "react";
+import { Link, useHistory } from "react-router-dom";
+import { addNewGame, logout, useGetAllGamesNames } from "../utils/firebaseHooks";
 import { UserContext } from "../utils/userContext";
 
 const Games = () => {
+  const history = useHistory()
+  const [addingGame, setAddingGame] = useState(false)
   const [games, loading, error] = useGetAllGamesNames();
   const { baseUser, userData } = useContext(UserContext);
   let nameListItems;
@@ -14,11 +16,19 @@ const Games = () => {
       </li>
     ));
   }
+  const handleAddNewGameClick = async () => {
+    setAddingGame(true)
+    const newGameID = await addNewGame(`${userData?.name}'s Game`)
+    setAddingGame(false)
+    history.push(`/${newGameID.data}`)
+  }
+
   return (
     <div>
       Welcome {userData?.name}
       {error ? <h1>ERROR</h1> : <ul>{nameListItems}</ul>}
-      <button onClick={addNewGame}>New Game</button>
+      {addingGame && <h2>Adding new game....</h2>}
+      <button onClick={handleAddNewGameClick}>New Game</button>
       <button onClick={logout}>Sign Out</button>
     </div>
   );

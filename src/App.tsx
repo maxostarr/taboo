@@ -6,7 +6,7 @@ import {
   Link,
   Redirect,
 } from "react-router-dom";
-import { useAuthStatePrimed } from "./firebaseHooks";
+import { useAuthStatePrimed } from "./utils/firebaseHooks";
 import Game from "./pages/game";
 import Games from "./pages/games";
 import Login from "./pages/login";

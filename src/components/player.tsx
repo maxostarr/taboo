@@ -1,5 +1,5 @@
 import React from 'react'
-import { useUserData } from '../firebaseHooks'
+import { useUserData } from '../utils/firebaseHooks'
 
 interface PlayerProps {
   id: string
@@ -7,9 +7,11 @@ interface PlayerProps {
 
 const Player = ({id}: PlayerProps) => {
   const [player, loading, error] = useUserData(id)
+  if(!player)
+    return <p>Error loading player</p>
   return (
     <div>
-      {Player.name}
+      {player.name}
     </div>
   )
 }

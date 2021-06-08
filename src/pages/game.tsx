@@ -1,7 +1,7 @@
 import React from "react";
 import { useRouteMatch } from "react-router";
 import Player from "../components/player";
-import { useGameData, useUserData, useUserDataOnce } from "../firebaseHooks";
+import { useGameData, useUserData } from "../utils/firebaseHooks";
 
 const Game = () => {
   const {

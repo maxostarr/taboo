@@ -1,5 +1,5 @@
 import { Redirect } from "react-router-dom";
-import { login, useAuthStatePrimed } from "../firebaseHooks";
+import { login, useAuthStatePrimed } from "../utils/firebaseHooks";
 const Login = () => {
   const [user, loading, error] = useAuthStatePrimed();
   console.error(error);

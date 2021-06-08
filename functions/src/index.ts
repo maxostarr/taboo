@@ -22,3 +22,18 @@ export const createPlayerForNewUser = functions.auth.user().onCreate((user) => {
   }
   db.collection("players").doc(user.uid).set(newPlayerData)
 });
+
+export const createNewGame = functions.https.onCall(async (name, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('failed-precondition', 'The function must be called while authenticated.');
+  }
+  const newGameData = {
+    name,
+    state: "starting",
+    createdAt: Date.now(),
+    leader: context.auth.uid,
+    playerIDs: [context.auth.uid],
+  }
+  const newGameDBEntry = await db.collection("games").add(newGameData)
+  return newGameDBEntry.id
+})

@@ -1,23 +1,28 @@
 import {
-  useCollection,
   useCollectionData,
   useDocumentData,
   useDocumentDataOnce,
 } from "react-firebase-hooks/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
+import "firebase/functions";
 import firebase from "firebase";
-import { firebaseConfig } from "./firebase.config";
-// import { useStoredUsername } from "./localstorageHooks";
-firebase.initializeApp(firebaseConfig);
+import { firebaseConfig } from "../firebase.config";
+export const app = firebase.initializeApp(firebaseConfig);
 
 const authProvider = new firebase.auth.GoogleAuthProvider();
 // authProvider.addScope("email");
 // authProvider.addScope("user_friends");
 
-interface UserData {
+firebase.functions()
+
+const createNewGame = firebase.functions().httpsCallable("createNewGame")
+
+export const addNewGame = (name: string) => createNewGame(name);
+
+export interface UserData {
   name: string;
 }
-interface Game {
+export interface Game {
   name: string;
   state: string;
   createdAt: number;
@@ -42,31 +47,18 @@ export const useGetAllGamesNames = () => {
     return value
       ? ([value, loading, error] as const)
       : ([
-          [
-            {
-              name: "No games",
-              state: "INVALID",
-            },
-          ] as any as Game[],
-          loading,
-          error,
-        ] as const);
+        [
+          {
+            name: "No games",
+            state: "INVALID",
+          },
+        ] as any as Game[],
+        loading,
+        error,
+      ] as const);
   }
 
   return [[] as any as Game[], loading, error] as const;
-};
-
-export const addNewGame = () => {
-  firebase
-    .firestore()
-    .collection("games")
-    .add({
-      name: "New Game",
-      state: "starting",
-      createdAt: Date.now(),
-      leader: firebase.auth().currentUser?.uid,
-      playerIDs: [firebase.auth().currentUser?.uid],
-    } as firebase.firestore.DocumentData);
 };
 
 export const login = async () => {
@@ -83,25 +75,18 @@ export const useUserDataOnce = (id: string | undefined) => {
   );
 };
 
-export const useGameData = (gameID: string) => {
-  return useDocumentData<Game>(
-    firebase.firestore().collection("games").doc(gameID),
-  );
-  // if (game) {
-  //   const players = game?.playerIDs
-  //     .map(useUserData)
-  //     .map((data) => data[0])
-  //     .filter((p) => p !== undefined);
-  //   game.players = players;
-  // }
-
-};
-
 export const useUserData = (userID: string | undefined) => {
   return useDocumentData<UserData>(
     firebase.firestore().collection("players").doc(userID),
   );
 };
+
+export const useGameData = (gameID: string) => {
+  return useDocumentData<Game>(
+    firebase.firestore().collection("games").doc(gameID),
+  );
+};
+
 
 export const useAuthStatePrimed = () => {
   // const [userData, setUserData] = useState({});

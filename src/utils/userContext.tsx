@@ -1,5 +1,5 @@
 import { createContext, FunctionComponent } from "react";
-import { useAuthStatePrimed, useUserData } from "../firebaseHooks";
+import { useAuthStatePrimed, useUserData } from "./firebaseHooks";
 
 type UserData = {
   name: string;
