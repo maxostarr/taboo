@@ -13,25 +13,25 @@ const authProvider = new firebase.auth.GoogleAuthProvider();
 // authProvider.addScope("email");
 // authProvider.addScope("user_friends");
 
-export interface UserData {
+export interface IUserData {
   name: string;
 }
-export interface Game {
+export interface IGame {
   name: string;
   state: string;
   createdAt: number;
   leader: string;
   playerIDs: string[];
-  players?: UserData[];
+  players?: IUserData[];
 }
 
-export interface Group {
-  name: string,
+export interface IGroup {
+  name: string;
   playerIDs: string[];
 }
 
 export const useGetAllGamesNames = () => {
-  const [value, loading, error] = useCollectionData<Game>(
+  const [value, loading, error] = useCollectionData<IGame>(
     firebase.firestore().collection("games"),
     {
       snapshotListenOptions: { includeMetadataChanges: true },
@@ -46,18 +46,18 @@ export const useGetAllGamesNames = () => {
     return value
       ? ([value, loading, error] as const)
       : ([
-        [
-          {
-            name: "No games",
-            state: "INVALID",
-          },
-        ] as any as Game[],
-        loading,
-        error,
-      ] as const);
+          [
+            {
+              name: "No games",
+              state: "INVALID",
+            },
+          ] as any as IGame[],
+          loading,
+          error,
+        ] as const);
   }
 
-  return [[] as any as Game[], loading, error] as const;
+  return [[] as any as IGame[], loading, error] as const;
 };
 
 export const login = async () => {
@@ -69,19 +69,19 @@ export const logout = () => {
 };
 
 export const useUserDataOnce = (id: string | undefined) => {
-  return useDocumentDataOnce<UserData>(
+  return useDocumentDataOnce<IUserData>(
     firebase.firestore().collection("players").doc(id),
   );
 };
 
 export const useUserData = (userID: string | undefined) => {
-  return useDocumentData<UserData>(
+  return useDocumentData<IUserData>(
     firebase.firestore().collection("players").doc(userID),
   );
 };
 
 export const useGameData = (gameID: string) => {
-  return useDocumentData<Game>(
+  return useDocumentData<IGame>(
     firebase.firestore().collection("games").doc(gameID),
   );
 };
@@ -91,12 +91,18 @@ export const useAuthStatePrimed = () => {
 };
 
 export const useGroupData = (gameID: string, groupID: string) => {
-  return useDocumentData<Group>(
+  return useDocumentData<IGroup>(
     firebase
       .firestore()
       .collection("games")
       .doc(gameID)
       .collection("groups")
-      .doc(groupID)
-  )
-}
+      .doc(groupID),
+  );
+};
+
+export const useGroupsData = (gameID: string) => {
+  return useCollectionData<IGroup>(
+    firebase.firestore().collection("games").doc(gameID).collection("groups"),
+  );
+};
