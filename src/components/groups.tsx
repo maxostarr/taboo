@@ -8,7 +8,6 @@ export interface GroupsProps {
 
 const Groups = ({ gameID }: GroupsProps) => {
   const [groups] = useGroupsData(gameID);
-  console.log("🚀 ~ file: groups.tsx ~ line 10 ~ Groups ~ groups", groups);
   const groupsList = groups?.map((groupData) => (
     <Group groupData={groupData} key={`group-listing-${groupData.name}`} />
   ));

@@ -13,6 +13,7 @@ const Login = () => {
       />
     );
   }
+  if (loading) return <p>Loading...</p>;
   return (
     <div>
       <button onClick={login}>Login</button>

@@ -1,5 +1,5 @@
 import React from "react";
-import { IGroup, useGroupData } from "../utils/firebaseHooks";
+import { IGroup } from "../utils/firebaseHooks";
 import Player from "./player";
 
 interface GroupProps {

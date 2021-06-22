@@ -16,6 +16,10 @@ const authProvider = new firebase.auth.GoogleAuthProvider();
 export interface IUserData {
   name: string;
 }
+
+export interface IBaseUser {
+  uid: string;
+}
 export interface IGame {
   name: string;
   state: string;

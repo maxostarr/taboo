@@ -4,14 +4,14 @@ import { useAuthStatePrimed, useUserData } from "./firebaseHooks";
 type UserData = {
   name: string;
 };
-interface UserContext {
-  baseUser: object;
+interface IUserContext {
+  baseUser: any;
   userData: UserData | undefined;
   loading: boolean;
   error: string;
 }
 
-export const UserContext = createContext({} as UserContext);
+export const UserContext = createContext({} as IUserContext);
 
 export const UserContextProvider: FunctionComponent = ({ children }) => {
   const [baseUser, loading, error] = useAuthStatePrimed();
