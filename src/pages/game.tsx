@@ -11,7 +11,6 @@ const Game = () => {
   const {
     params: { id },
   } = useRouteMatch<{ id: string }>();
-  // const [user] = useAuthStatePrimed();
   const { baseUser } = useContext(UserContext);
   const [game] = useGameData(id);
   const [leader] = useUserData(game?.leader);

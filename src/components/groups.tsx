@@ -9,7 +9,11 @@ export interface GroupsProps {
 const Groups = ({ gameID }: GroupsProps) => {
   const [groups] = useGroupsData(gameID);
   const groupsList = groups?.map((groupData) => (
-    <Group groupData={groupData} key={`group-listing-${groupData.name}`} />
+    <Group
+      groupData={groupData}
+      gameID={gameID}
+      key={`group-listing-${groupData.name}`}
+    />
   ));
   return <div>{groupsList}</div>;
 };

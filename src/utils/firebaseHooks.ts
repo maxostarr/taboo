@@ -32,6 +32,7 @@ export interface IGame {
 export interface IGroup {
   name: string;
   playerIDs: string[];
+  id: string;
 }
 
 export const useGetAllGamesNames = () => {
@@ -108,5 +109,8 @@ export const useGroupData = (gameID: string, groupID: string) => {
 export const useGroupsData = (gameID: string) => {
   return useCollectionData<IGroup>(
     firebase.firestore().collection("games").doc(gameID).collection("groups"),
+    {
+      idField: "id",
+    },
   );
 };
