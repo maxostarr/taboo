@@ -57,7 +57,7 @@ export const joinGame = functions.https.onCall(async (gameId, context) => {
   }
   const user = await db.collection("players").doc(context.auth.uid).get();
   const userData = user.data();
-  if (userData?.game) {
+  if (userData && userData.game && userData.game !== gameId) {
     await db
       .collection("games")
       .doc(userData.game)
