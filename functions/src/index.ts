@@ -18,6 +18,7 @@ export const createPlayerForNewUser = functions.auth.user().onCreate((user) => {
   const newPlayerData = {
     name: user.displayName,
     role: "user",
+    game: "",
   };
   db.collection("players").doc(user.uid).set(newPlayerData);
 });
@@ -35,11 +36,14 @@ export const createNewGame = functions.https.onCall(async (name, context) => {
     createdAt: Date.now(),
     leader: context.auth.uid,
     playerIDs: [context.auth.uid],
+    wordsToPlay: [],
+    playedWords: [],
   };
   const newGameDBEntry = await db.collection("games").add(newGameData);
   await newGameDBEntry.collection("groups").add({
     name: "Group 1",
     playerIDs: [context.auth.uid],
+    points: 0,
   });
   return newGameDBEntry.id;
 });
@@ -51,6 +55,19 @@ export const joinGame = functions.https.onCall(async (gameId, context) => {
       "The function must be called while authenticated.",
     );
   }
+  const user = await db.collection("players").doc(context.auth.uid).get();
+  const userData = user.data();
+  if (userData?.game) {
+    await db
+      .collection("games")
+      .doc(userData.game)
+      .update({
+        playerIDs: admin.firestore.FieldValue.arrayRemove(context.auth.uid),
+      });
+  }
+  await db.collection("players").doc(context.auth.uid).update({
+    game: gameId,
+  });
   await db
     .collection("games")
     .doc(gameId)

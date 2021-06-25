@@ -1,12 +1,9 @@
 import { createContext, FunctionComponent } from "react";
-import { useAuthStatePrimed, useUserData } from "./firebaseHooks";
+import { IUserData, useAuthStatePrimed, useUserData } from "./firebaseHooks";
 
-type UserData = {
-  name: string;
-};
 interface IUserContext {
   baseUser: any;
-  userData: UserData | undefined;
+  userData: IUserData | undefined;
   loading: boolean;
   error: string;
 }

@@ -9,7 +9,6 @@ interface GroupProps {
 }
 
 const Group = ({ groupData, gameID }: GroupProps) => {
-  console.log("🚀 ~ file: group.tsx ~ line 11 ~ Group ~ groupData", groupData);
   const players = groupData.playerIDs.map((pid) => (
     <Player key={`group-${pid}`} id={pid} />
   ));

@@ -11,18 +11,14 @@ const Game = () => {
   const {
     params: { id },
   } = useRouteMatch<{ id: string }>();
-  const { baseUser } = useContext(UserContext);
+  const { baseUser, userData } = useContext(UserContext);
   const [game] = useGameData(id);
   const [leader] = useUserData(game?.leader);
   if (!baseUser || !leader || !game) return <p>Loading...</p>;
 
   const players = game?.playerIDs.map((pid) => <Player key={pid} id={pid} />);
 
-  if (
-    baseUser &&
-    game.state === "starting" &&
-    !game?.playerIDs.includes(baseUser.uid)
-  )
+  if (userData && game.state === "starting" && userData.game !== id)
     joinGame(id);
 
   return (
