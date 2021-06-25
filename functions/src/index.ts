@@ -116,7 +116,7 @@ export const createNewGroupIfNeeded = functions.firestore
     }
     if (groupNeeded) {
       await groupsDbRef.add({
-        name: `Group ${groups.docs.length}`,
+        name: `Group ${groups.docs.length + 1}`,
         playerIDs: [],
         points: 0,
       });
