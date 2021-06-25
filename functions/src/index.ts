@@ -58,12 +58,16 @@ export const joinGame = functions.https.onCall(async (gameId, context) => {
   const user = await db.collection("players").doc(context.auth.uid).get();
   const userData = user.data();
   if (userData && userData.game && userData.game !== gameId) {
-    await db
-      .collection("games")
-      .doc(userData.game)
-      .update({
-        playerIDs: admin.firestore.FieldValue.arrayRemove(context.auth.uid),
-      });
+    // this can possible fail as the old game may have been removed.
+    // That's fine though since then nothing needs to be done, so we catch and ignore the error
+    try {
+      await db
+        .collection("games")
+        .doc(userData.game)
+        .update({
+          playerIDs: admin.firestore.FieldValue.arrayRemove(context.auth.uid),
+        });
+    } catch {}
   }
   await db.collection("players").doc(context.auth.uid).update({
     game: gameId,
@@ -94,3 +98,27 @@ export const joinGroup = functions.https.onCall(
       });
   },
 );
+
+export const createNewGroupIfNeeded = functions.firestore
+  // .ref("/games/{gameId}/groups/{groupId}/playerIDs")
+  .document("games/{gameId}/groups/{groupId}")
+  .onUpdate(async (change, context) => {
+    const { gameId } = context.params;
+    const groupsDbRef = db.collection("games").doc(gameId).collection("groups");
+    const groups = await groupsDbRef.get();
+    let groupNeeded = true;
+    for (const group of groups.docs) {
+      const data = group.data();
+      if (data.playerIDs.length < 2) {
+        groupNeeded = false;
+        break;
+      }
+    }
+    if (groupNeeded) {
+      await groupsDbRef.add({
+        name: `Group ${groups.docs.length}`,
+        playerIDs: [],
+        points: 0,
+      });
+    }
+  });
