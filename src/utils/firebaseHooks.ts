@@ -13,9 +13,15 @@ const authProvider = new firebase.auth.GoogleAuthProvider();
 // authProvider.addScope("email");
 // authProvider.addScope("user_friends");
 
+export enum PlayerState {
+  "judging",
+  "reading",
+  "guessing",
+}
 export interface IUserData {
   name: string;
   game: string;
+  state: PlayerState;
 }
 
 export interface IBaseUser {

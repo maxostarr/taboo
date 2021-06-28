@@ -1,5 +1,6 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import { words } from "./wordsList";
 
 admin.initializeApp();
 // var db = app.database();
@@ -19,6 +20,7 @@ export const createPlayerForNewUser = functions.auth.user().onCreate((user) => {
     name: user.displayName,
     role: "user",
     game: "",
+    state: "judging",
   };
   db.collection("players").doc(user.uid).set(newPlayerData);
 });
@@ -37,7 +39,10 @@ export const createNewGame = functions.https.onCall(async (name, context) => {
     leader: context.auth.uid,
     playerIDs: [context.auth.uid],
     wordsToPlay: [],
-    playedWords: [],
+    playedWordsCorrect: [],
+    playedWordsIncorrect: [],
+    playingGroup: "",
+    readingPlayerIndex: 0,
   };
   const newGameDBEntry = await db.collection("games").add(newGameData);
   await newGameDBEntry.collection("groups").add({
@@ -122,3 +127,109 @@ export const createNewGroupIfNeeded = functions.firestore
       });
     }
   });
+
+const addWordsToPlay = (gameId: string, numWords: number) => {
+  const randomWords = Array.from({ length: numWords }).map(
+    (_) => words[Math.floor(Math.random() * words.length)].word,
+  );
+  return db
+    .collection("games")
+    .doc(gameId)
+    .update({
+      wordsToPlay: admin.firestore.FieldValue.arrayUnion(...randomWords),
+    });
+};
+
+export const startGame = functions.https.onCall(async (gameId: string) => {
+  functions.logger.debug({ gameId });
+  await addWordsToPlay(gameId, 10);
+  const groups = await db
+    .collection("games")
+    .doc(gameId)
+    .collection("groups")
+    .get();
+  const cleanedGroupsDocs = groups.docs.filter(
+    (group) => group.data().playerIDs.length === 2,
+  );
+  const firstGroupData = cleanedGroupsDocs[0].data();
+  firstGroupData.id = cleanedGroupsDocs[0].id;
+  functions.logger.debug({ firstGroupData });
+  const readingPlayerIndex = 0;
+  db.collection("games").doc(gameId).update({
+    readingPlayerIndex,
+    state: "ready",
+    playingGroup: firstGroupData.id,
+  });
+
+  db.collection("players")
+    .doc(firstGroupData.playerIDs[readingPlayerIndex])
+    .update({
+      state: "reading",
+    });
+
+  db.collection("players")
+    .doc(firstGroupData.playerIDs[1 - readingPlayerIndex])
+    .update({
+      state: "guessing",
+    });
+});
+
+export const nextGroup = functions.https.onCall(async (gameId: string) => {
+  const game = (await db.collection("games").doc(gameId).get()).data();
+  if (!game) {
+    throw new Error("Unknown gameId");
+  }
+  const groups = await db
+    .collection("games")
+    .doc(gameId)
+    .collection("groups")
+    .get();
+  const { playingGroup, readingPlayerIndex } = game;
+
+  const playingGroupIndex = groups.docs.findIndex(
+    ({ id }) => id === playingGroup,
+  );
+  const nextPlayingGroup =
+    groups.docs[(playingGroupIndex + 1) % groups.docs.length];
+
+  const nextReadingPlayerIndex =
+    nextPlayingGroup.id === groups.docs[0].id
+      ? 1 - readingPlayerIndex
+      : readingPlayerIndex;
+
+  await Promise.all([
+    db.collection("games").doc(gameId).update({
+      nextReadingPlayerIndex,
+      playingGroup: nextPlayingGroup.id,
+    }),
+
+    db
+      .collection("players")
+      .doc(playingGroup.data().playerIDs[nextReadingPlayerIndex])
+      .update({
+        state: "judging",
+      }),
+
+    db
+      .collection("players")
+      .doc(playingGroup.data().playerIDs[1 - nextReadingPlayerIndex])
+      .update({
+        state: "judging",
+      }),
+
+    db
+      .collection("players")
+      .doc(nextPlayingGroup.data().playerIDs[nextReadingPlayerIndex])
+      .update({
+        state: "reading",
+      }),
+
+    db
+      .collection("players")
+      .doc(nextPlayingGroup.data().playerIDs[1 - nextReadingPlayerIndex])
+      .update({
+        state: "guessing",
+      }),
+    await addWordsToPlay(gameId, 5),
+  ]);
+});
